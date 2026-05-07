@@ -12,12 +12,12 @@ export class AnalyticsService {
     this.initialized = true;
     const script = document.createElement('script');
     script.async = true;
-    script.src = 'https://www.googletagmanager.com/gtag/js?id=G-MOCK123456';
+    script.src = 'https://www.googletagmanager.com/gtag/js?id=G-EMEV38L18X';
     document.head.appendChild(script);
     (window as any).dataLayer = (window as any).dataLayer || [];
     (window as any).gtag = function() { (window as any).dataLayer.push(arguments); };
     (window as any).gtag('js', new Date());
-    (window as any).gtag('config', 'G-MOCK123456');
+    (window as any).gtag('config', 'G-EMEV38L18X');
     this.router.events.pipe(filter(event => event instanceof NavigationEnd)).subscribe(event => {
       this.trackPageView((event as NavigationEnd).urlAfterRedirects);
     });
