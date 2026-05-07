@@ -1,0 +1,24 @@
+@keyframes float-dot {
+  from { transform: translate3d(0, 20px, 0); opacity: .12; }
+  50% { opacity: .72; }
+  to { transform: translate3d(26px, -80px, 0); opacity: .08; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -220px 0; }
+  100% { background-position: calc(220px + 100%) 0; }
+}
+
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 var(--color-primary-glow); }
+  80% { box-shadow: 0 0 0 18px rgba(201,49,74,0); }
+  100% { box-shadow: 0 0 0 0 rgba(201,49,74,0); }
+}
+
+@keyframes draw-check {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes type-blink {
+  50% { opacity: 0; }
+}
