@@ -2,6 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { AnalyticsService } from './core/services/analytics.service';
 import { LanguageService } from './core/services/language.service';
+import { SeoService } from './core/services/seo.service';
 import { StorageService } from './core/services/storage.service';
 import { ThemeService } from './core/services/theme.service';
 import { FooterComponent } from './shared/components/footer/footer.component';
@@ -20,11 +21,13 @@ export class AppComponent implements OnInit {
   private analytics = inject(AnalyticsService);
   private theme = inject(ThemeService);
   private language = inject(LanguageService);
+  private seo = inject(SeoService);
 
   ngOnInit(): void {
     this.storage.seedIfEmpty();
     this.theme.init();
     this.language.setLanguage(this.language.language());
+    this.seo.init();
     this.analytics.init();
   }
 }

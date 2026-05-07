@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://alnmrtnk.github.io/mafia-saas-angular/sitemap.xml
