@@ -35,14 +35,21 @@ The application demonstrates how an online Mafia platform can support both indiv
 - ng2-charts and Chart.js
 - lucide-angular icons
 - LocalStorage-based mock persistence
-- GitHub Pages deployment
+- Vercel deployment with SPA route fallback
+- GitHub Pages-compatible static build
 
 ## Important URLs
 
-Main site:
+Current GitHub Pages site:
 
 ```text
 https://alnmrtnk.github.io/mafia-saas-angular/
+```
+
+After deploying to Vercel, the production URL will look similar to:
+
+```text
+https://mafia-saas-angular.vercel.app/
 ```
 
 Sitemap:
@@ -114,6 +121,12 @@ The build output is generated in:
 dist/mafia-saas-angular/
 ```
 
+For Vercel, the deployed static output directory is:
+
+```text
+dist/mafia-saas-angular/browser
+```
+
 ## Tests
 
 Run unit tests:
@@ -122,24 +135,63 @@ Run unit tests:
 npm test
 ```
 
+## Vercel Deployment
+
+This project includes a `vercel.json` file with a fallback rewrite:
+
+```json
+{
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
+```
+
+The rewrite is required for Angular single-page application routes. It allows direct access to URLs such as:
+
+```text
+/subscription
+/tournament
+/dashboard
+```
+
+Recommended Vercel settings:
+
+```text
+Framework Preset: Angular
+Build Command: npm run build
+Output Directory: dist/mafia-saas-angular/browser
+Install Command: npm install
+```
+
+Deployment steps:
+
+1. Push the repository to GitHub.
+2. Open Vercel and choose Add New Project.
+3. Import this GitHub repository.
+4. Confirm the Angular build settings.
+5. Deploy the project.
+6. Use the generated `.vercel.app` URL in Google Search Console and analytics services.
+
 ## GitHub Pages Routing Note
 
-This project is an Angular single-page application. GitHub Pages does not provide server-side rewrite rules for deep SPA routes. Because of that, URLs such as:
+GitHub Pages does not provide server-side rewrite rules for deep SPA routes. Because of that, direct URLs such as:
 
 ```text
 https://alnmrtnk.github.io/mafia-saas-angular/subscription
 https://alnmrtnk.github.io/mafia-saas-angular/tournament
 ```
 
-may return a 404 page when opened directly in the browser, even though they work correctly when navigating inside the application.
+can return a GitHub Pages 404 because there are no physical folders with those names. For full SEO-friendly clean URLs, use the Vercel deployment.
 
-For SEO and Google Search Console checks, the safest canonical entry point on GitHub Pages is:
+For Google Search Console checks on GitHub Pages, the safest canonical URL is:
 
 ```text
 https://alnmrtnk.github.io/mafia-saas-angular/
 ```
-
-If full direct access to every route is required, deploy the project to a hosting provider with SPA fallback rewrites, such as Netlify, Vercel, Firebase Hosting, or another static host that can serve `index.html` for all application routes.
 
 ## Subject Area
 
