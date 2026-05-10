@@ -14,7 +14,7 @@ export class SeoService {
   private router = inject(Router);
   private title = inject(Title);
   private meta = inject(Meta);
-  private readonly siteUrl = 'https://alnmrtnk.github.io/mafia-saas-angular';
+  private readonly siteUrl = 'https://mafia-saas-angular.vercel.app';
   private readonly fallback: SeoData = {
     title: 'Mafia SaaS - Online Mafia Game Platform for Players and Clubs',
     description: 'Play Mafia online, host club games, manage tournaments, assign roles, track results, and view player statistics with Mafia SaaS.',

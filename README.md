@@ -40,28 +40,29 @@ The application demonstrates how an online Mafia platform can support both indiv
 
 ## Important URLs
 
-Current GitHub Pages site:
-
-```text
-https://alnmrtnk.github.io/mafia-saas-angular/
-```
-
-After deploying to Vercel, the production URL will look similar to:
+Production site:
 
 ```text
 https://mafia-saas-angular.vercel.app/
 ```
 
+Direct application routes:
+
+```text
+https://mafia-saas-angular.vercel.app/subscription
+https://mafia-saas-angular.vercel.app/tournament
+```
+
 Sitemap:
 
 ```text
-https://alnmrtnk.github.io/mafia-saas-angular/sitemap.xml
+https://mafia-saas-angular.vercel.app/sitemap.xml
 ```
 
 Robots file:
 
 ```text
-https://alnmrtnk.github.io/mafia-saas-angular/robots.txt
+https://mafia-saas-angular.vercel.app/robots.txt
 ```
 
 ## SEO and Web Analytics Context
@@ -176,21 +177,10 @@ Deployment steps:
 5. Deploy the project.
 6. Use the generated `.vercel.app` URL in Google Search Console and analytics services.
 
-## GitHub Pages Routing Note
-
-GitHub Pages does not provide server-side rewrite rules for deep SPA routes. Because of that, direct URLs such as:
+Current production deployment:
 
 ```text
-https://alnmrtnk.github.io/mafia-saas-angular/subscription
-https://alnmrtnk.github.io/mafia-saas-angular/tournament
-```
-
-can return a GitHub Pages 404 because there are no physical folders with those names. For full SEO-friendly clean URLs, use the Vercel deployment.
-
-For Google Search Console checks on GitHub Pages, the safest canonical URL is:
-
-```text
-https://alnmrtnk.github.io/mafia-saas-angular/
+https://mafia-saas-angular.vercel.app/
 ```
 
 ## Subject Area
