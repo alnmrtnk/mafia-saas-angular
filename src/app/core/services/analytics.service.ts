@@ -27,6 +27,7 @@ export class AnalyticsService {
   private readonly consentStorageKey = 'mafia_analytics_consent';
   private router = inject(Router);
   private initialized = false;
+  private mixpanelReady = false;
   private routeTrackingStarted = false;
   private currentUser: User | null = null;
   private pendingEvents: Array<{ name: string; properties: Record<string, unknown> }> = [];
@@ -109,7 +110,7 @@ export class AnalyticsService {
       return;
     }
     this.trackGoogleAnalyticsEvent(event.name, event.properties);
-    if (!window.mixpanel) {
+    if (!this.mixpanelReady || !window.mixpanel) {
       this.pendingEvents.push(event);
       return;
     }
@@ -128,47 +129,20 @@ export class AnalyticsService {
   }
 
   private loadMixpanel(): void {
-    this.installMixpanelBootstrap();
-    window.mixpanel?.init(this.mixpanelToken, {
-      debug: false,
-      persistence: 'localStorage',
-      track_pageview: false
-    });
     const script = document.createElement('script');
     script.async = true;
     script.src = 'https://cdn.mxpnl.com/libs/mixpanel-2-latest.min.js';
     script.onload = () => {
+      window.mixpanel?.init(this.mixpanelToken, {
+        debug: false,
+        persistence: 'localStorage',
+        track_pageview: false
+      });
+      this.mixpanelReady = true;
       this.identifyCurrentUser();
       this.flushPendingEvents();
     };
     document.head.appendChild(script);
-  }
-
-  private installMixpanelBootstrap(): void {
-    const current = window.mixpanel as unknown as { __SV?: number } | undefined;
-    if (current?.__SV) return;
-
-    const mixpanelQueue = [] as unknown as unknown[] & Record<string, unknown>;
-    const createQueuedMethod = (target: Record<string, unknown>, method: string): void => {
-      target[method] = (...args: unknown[]) => {
-        mixpanelQueue.push([method, ...args]);
-        return mixpanelQueue;
-      };
-    };
-
-    for (const method of ['disable', 'time_event', 'track', 'track_pageview', 'track_links', 'track_forms', 'register', 'register_once', 'alias', 'unregister', 'identify', 'name_tag', 'set_config', 'reset', 'people.set', 'people.set_once', 'people.unset', 'people.increment', 'people.append', 'people.union', 'people.track_charge', 'people.clear_charges', 'people.delete_user']) {
-      createQueuedMethod(mixpanelQueue, method);
-    }
-
-    mixpanelQueue['people'] = {
-      set: mixpanelQueue['people.set']
-    };
-    mixpanelQueue['init'] = (token: string, config?: Record<string, unknown>) => {
-      mixpanelQueue.push(['init', token, config]);
-      return mixpanelQueue;
-    };
-    mixpanelQueue['__SV'] = 1.2;
-    window.mixpanel = mixpanelQueue as unknown as Window['mixpanel'];
   }
 
   private startRouteTracking(): void {
@@ -180,7 +154,7 @@ export class AnalyticsService {
   }
 
   private identifyCurrentUser(): void {
-    if (!this.currentUser || !window.mixpanel) return;
+    if (!this.currentUser || !this.mixpanelReady || !window.mixpanel) return;
     window.mixpanel.identify(this.currentUser.id);
     window.mixpanel.people.set(this.cleanProperties({
       $name: this.currentUser.username,
@@ -195,7 +169,7 @@ export class AnalyticsService {
   }
 
   private flushPendingEvents(): void {
-    if (!window.mixpanel) return;
+    if (!this.mixpanelReady || !window.mixpanel) return;
     for (const event of this.pendingEvents) {
       window.mixpanel.track(event.name, event.properties);
     }
