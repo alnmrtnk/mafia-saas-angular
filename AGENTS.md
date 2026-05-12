@@ -12,6 +12,7 @@ This Angular app uses Mixpanel for product analytics through `src/app/core/servi
 | CDP | None found in the codebase |
 | Consent required | Yes, EU users are in scope |
 | Mixpanel API host | `https://api-eu.mixpanel.com` |
+| Session Replay | Enabled with `record_sessions_percent: 100` for lab/demo verification |
 | Token location | `AnalyticsService.mixpanelToken` |
 
 ## Initialization And Consent

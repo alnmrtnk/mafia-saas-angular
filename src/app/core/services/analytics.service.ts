@@ -129,6 +129,7 @@ export class AnalyticsService {
         api_host: 'https://api-eu.mixpanel.com',
         debug: true,
         persistence: 'localStorage',
+        record_sessions_percent: 100,
         track_pageview: false
       });
       this.identifyCurrentUser();
