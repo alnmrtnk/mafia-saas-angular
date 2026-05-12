@@ -11,6 +11,7 @@ This Angular app uses Mixpanel for product analytics through `src/app/core/servi
 | Tracking method | Client-side |
 | CDP | None found in the codebase |
 | Consent required | Yes, EU users are in scope |
+| Mixpanel API host | `https://api-eu.mixpanel.com` |
 | Token location | `AnalyticsService.mixpanelToken` |
 
 ## Initialization And Consent
@@ -57,4 +58,3 @@ Use the stable internal user ID as Mixpanel `distinct_id`. Do not use email as t
 4. Omit empty values instead of sending `null` or empty strings.
 5. Add new events to this file after implementation.
 6. Verify in Mixpanel Live View after accepting the app consent banner.
-

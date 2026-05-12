@@ -126,6 +126,7 @@ export class AnalyticsService {
     this.mixpanelLoading = import('mixpanel-browser').then(({ default: mixpanel }) => {
       this.mixpanel = mixpanel;
       mixpanel.init(this.mixpanelToken, {
+        api_host: 'https://api-eu.mixpanel.com',
         debug: true,
         persistence: 'localStorage',
         track_pageview: false
