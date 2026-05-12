@@ -4,20 +4,25 @@ import { filter } from 'rxjs';
 import { User } from '../models/user.model';
 
 type ConsentChoice = 'accepted' | 'declined';
+type AnalyticsEvent = { name: string; properties: Record<string, unknown> };
+
+interface MixpanelClient {
+  __SV?: number;
+  init: (token: string, config?: Record<string, unknown>, name?: string) => unknown;
+  identify: (id: string) => void;
+  people: { set: (properties: Record<string, unknown>) => void };
+  register: (properties: Record<string, unknown>) => void;
+  reset: () => void;
+  track: (event: string, properties?: Record<string, unknown>) => void;
+}
+
+type MixpanelQueue = unknown[] & Record<string, unknown>;
 
 declare global {
   interface Window {
     dataLayer?: unknown[];
     gtag?: (...args: unknown[]) => void;
-    mixpanel?: {
-      __SV?: number;
-      init: (token: string, config?: Record<string, unknown>) => void;
-      identify: (id: string) => void;
-      people: { set: (properties: Record<string, unknown>) => void };
-      register: (properties: Record<string, unknown>) => void;
-      reset: () => void;
-      track: (event: string, properties?: Record<string, unknown>) => void;
-    };
+    mixpanel?: MixpanelClient;
   }
 }
 
@@ -25,12 +30,22 @@ declare global {
 export class AnalyticsService {
   private readonly mixpanelToken = '1bb418e92cffca0d4e1d02bf47422aa6';
   private readonly consentStorageKey = 'mafia_analytics_consent';
+  private readonly mixpanelMethods = [
+    'disable', 'time_event', 'track', 'track_pageview', 'track_links', 'track_forms',
+    'register', 'register_once', 'alias', 'unregister', 'identify', 'name_tag',
+    'set_config', 'reset'
+  ];
+  private readonly mixpanelPeopleMethods = [
+    'set', 'set_once', 'unset', 'increment', 'append', 'union',
+    'track_charge', 'clear_charges', 'delete_user'
+  ];
+
   private router = inject(Router);
   private initialized = false;
   private mixpanelReady = false;
   private routeTrackingStarted = false;
   private currentUser: User | null = null;
-  private pendingEvents: Array<{ name: string; properties: Record<string, unknown> }> = [];
+  private pendingEvents: AnalyticsEvent[] = [];
 
   init(): void {
     if (this.initialized || typeof document === 'undefined' || !this.hasConsent()) return;
@@ -64,9 +79,7 @@ export class AnalyticsService {
 
   setUser(user: User | null): void {
     this.currentUser = user;
-    if (user) {
-      this.identifyCurrentUser();
-    }
+    if (user) this.identifyCurrentUser();
   }
 
   resetUser(): void {
@@ -97,7 +110,7 @@ export class AnalyticsService {
   }
 
   track(name: string, properties: Record<string, unknown> = {}): void {
-    const event = {
+    const event: AnalyticsEvent = {
       name,
       properties: this.cleanProperties({
         ...properties,
@@ -105,15 +118,18 @@ export class AnalyticsService {
         user_role: this.currentUser?.role
       })
     };
+
     if (!this.initialized) {
       if (this.hasConsent()) this.pendingEvents.push(event);
       return;
     }
+
     this.trackGoogleAnalyticsEvent(event.name, event.properties);
     if (!this.mixpanelReady || !window.mixpanel) {
       this.pendingEvents.push(event);
       return;
     }
+
     window.mixpanel.track(event.name, event.properties);
   }
 
@@ -129,20 +145,62 @@ export class AnalyticsService {
   }
 
   private loadMixpanel(): void {
+    this.installMixpanelBootstrap();
+    window.mixpanel?.init(this.mixpanelToken, {
+      debug: false,
+      persistence: 'localStorage',
+      track_pageview: false
+    });
+    this.mixpanelReady = true;
+
     const script = document.createElement('script');
     script.async = true;
     script.src = 'https://cdn.mxpnl.com/libs/mixpanel-2-latest.min.js';
     script.onload = () => {
-      window.mixpanel?.init(this.mixpanelToken, {
-        debug: false,
-        persistence: 'localStorage',
-        track_pageview: false
-      });
-      this.mixpanelReady = true;
       this.identifyCurrentUser();
       this.flushPendingEvents();
     };
     document.head.appendChild(script);
+  }
+
+  private installMixpanelBootstrap(): void {
+    const existing = window.mixpanel as unknown as { __SV?: number } | undefined;
+    if (existing?.__SV) return;
+
+    const root = [] as unknown as MixpanelQueue;
+    root['_i'] = [];
+    root['__SV'] = 1.2;
+    root['init'] = (token: string, config?: Record<string, unknown>, name?: string): MixpanelQueue => {
+      const target = name ? this.namedMixpanelQueue(root, name) : root;
+      this.installMixpanelMethods(target);
+      (root['_i'] as unknown[]).push([token, config ?? {}, name]);
+      return target;
+    };
+
+    window.mixpanel = root as unknown as MixpanelClient;
+  }
+
+  private namedMixpanelQueue(root: MixpanelQueue, name: string): MixpanelQueue {
+    if (!root[name]) root[name] = [] as unknown as MixpanelQueue;
+    return root[name] as MixpanelQueue;
+  }
+
+  private installMixpanelMethods(queue: MixpanelQueue): void {
+    for (const method of this.mixpanelMethods) {
+      queue[method] = (...args: unknown[]) => {
+        queue.push([method, ...args]);
+        return queue;
+      };
+    }
+
+    const people = (queue['people'] ?? []) as MixpanelQueue;
+    for (const method of this.mixpanelPeopleMethods) {
+      people[method] = (...args: unknown[]) => {
+        people.push([method, ...args]);
+        return people;
+      };
+    }
+    queue['people'] = people;
   }
 
   private startRouteTracking(): void {
