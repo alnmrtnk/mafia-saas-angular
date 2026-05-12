@@ -28,7 +28,13 @@ export class SubscriptionService {
     this.storage.set('invoices', [invoice, ...this.storage.get<Invoice>('invoices')]);
     return of(subscription).pipe(delay(1500), tap(saved => {
       this.subscriptions.set(this.storage.get<Subscription>('subscriptions'));
-      this.analytics.trackEvent('Subscription', 'plan_upgraded', saved.plan, saved.amount);
+      this.analytics.track('plan_upgraded', {
+        subscription_id: saved.id,
+        plan,
+        payment_provider: provider,
+        amount: saved.amount,
+        currency: 'UAH'
+      });
     }));
   }
 }

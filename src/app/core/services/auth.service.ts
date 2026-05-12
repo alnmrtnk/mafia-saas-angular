@@ -33,6 +33,7 @@ export class AuthService {
   logout(): void {
     localStorage.removeItem('mafia_token');
     this.userSignal.set(null);
+    this.analytics.resetUser();
     this.router.navigateByUrl('/');
   }
 
@@ -45,7 +46,12 @@ export class AuthService {
     const token = btoa(JSON.stringify({ sub: user.id, email: user.email, role: user.role, exp: Date.now() + 86400000 }));
     localStorage.setItem('mafia_token', token);
     this.userSignal.set(user);
-    this.analytics.trackEvent('Auth', event, user.role);
+    if (event === 'user_registered') {
+      this.analytics.trackSignUpCompleted(user);
+    } else {
+      this.analytics.setUser(user);
+      this.analytics.trackEvent('Auth', event, user.role);
+    }
   }
 
   private readCurrentUser(): User | null {

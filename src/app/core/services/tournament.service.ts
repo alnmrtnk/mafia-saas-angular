@@ -18,7 +18,13 @@ export class TournamentService {
     const tournament: Tournament = { ...input, id: this.storage.id('t'), organizerId: user.id, status: 'Registration', participants: [], rounds: [], createdAt: new Date().toISOString() };
     return of(this.storage.upsert('tournaments', tournament)).pipe(delay(500), tap(saved => {
       this.tournaments.set(this.storage.get<Tournament>('tournaments'));
-      this.analytics.trackEvent('Tournament', 'tournament_created', saved.name);
+      this.analytics.track('tournament_created', {
+        tournament_id: saved.id,
+        scenario_id: saved.scenarioId,
+        max_participants: saved.maxParticipants,
+        prize: saved.prize,
+        start_date: saved.startDate
+      });
     }));
   }
 

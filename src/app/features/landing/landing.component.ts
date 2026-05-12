@@ -144,6 +144,9 @@ export class LandingComponent {
   }
 
   track(label: string): void {
-    this.analytics.trackEvent('Landing', 'cta_clicked', label);
+    this.analytics.track('cta_clicked', {
+      cta_label: label,
+      page_name: 'landing'
+    });
   }
 }

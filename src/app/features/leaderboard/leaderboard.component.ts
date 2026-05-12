@@ -19,5 +19,5 @@ export class LeaderboardComponent {
   readonly tabs = ['All Time', 'This Month', 'By Role'];
   readonly top3 = computed(() => this.stats.leaderboard().slice(0, 3));
   readonly filtered = computed(() => this.stats.leaderboard().filter(e => e.username.toLowerCase().includes(this.query.toLowerCase())));
-  constructor() { inject(AnalyticsService).trackEvent('Leaderboard', 'page_view'); }
+  constructor() { inject(AnalyticsService).track('leaderboard_viewed'); }
 }

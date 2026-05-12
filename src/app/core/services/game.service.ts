@@ -25,7 +25,15 @@ export class GameService {
     const game: GameSession = { id: this.storage.id('g'), name, scenarioId, hostId: user.id, status: 'WaitingForPlayers', players, currentPhase: 0, chatMessages: [], createdAt: new Date().toISOString(), completedAt: null, winningSide: null, statEvents: [], organizerNotes: '' };
     return of(this.storage.upsert('games', game)).pipe(delay(this.latency()), tap(saved => {
       this.refresh();
-      this.analytics.trackEvent('Game', 'game_created', this.scenarios().find(s => s.id === scenarioId)?.name);
+      const scenario = this.scenarios().find(s => s.id === scenarioId);
+      this.analytics.track('game_created', {
+        game_id: saved.id,
+        scenario_id: scenarioId,
+        scenario_name: scenario?.name,
+        host_id: user.id,
+        player_count: saved.players.length,
+        max_players: scenario?.maxPlayers
+      });
     }));
   }
 
@@ -75,6 +83,7 @@ export class GameService {
   setPhase(gameId: string, status: GameStatus): void {
     const game = this.games().find(item => item.id === gameId);
     if (!game) return;
+    const wasCompleted = game.status === 'Completed';
     game.status = status;
     if (status === 'DayPhase' || status === 'NightPhase') game.currentPhase += 1;
     if (status === 'Completed') {
@@ -82,6 +91,7 @@ export class GameService {
       game.winningSide = game.winningSide ?? 'Citizens';
     }
     this.record(game, 'PhaseChange', `Phase changed to ${status}`);
+    if (status === 'Completed' && !wasCompleted) this.trackGameCompleted(game);
     this.save(game);
   }
 
@@ -92,6 +102,7 @@ export class GameService {
     game.completedAt = new Date().toISOString();
     game.winningSide = winningSide;
     this.record(game, 'Custom', `Organizer completed game. Winner: ${winningSide}`);
+    this.trackGameCompleted(game);
     this.save(game);
   }
 
@@ -119,7 +130,11 @@ export class GameService {
     }
     return of(this.storage.upsert('games', game)).pipe(delay(this.latency()), tap(saved => {
       this.refresh();
-      this.analytics.trackEvent('Game', 'game_joined', saved.id);
+      this.analytics.track('game_joined', {
+        game_id: saved.id,
+        scenario_id: saved.scenarioId,
+        player_count: saved.players.length
+      });
     }));
   }
 
@@ -132,7 +147,15 @@ export class GameService {
     game.currentPhase = 1;
     game.players = game.players.map((player, index) => ({ ...player, role: roles[index] ?? 'Citizen', isAlive: true, isReady: true, votes: 0 }));
     game.chatMessages.push({ id: this.storage.id('msg'), userId: 'system', username: 'System', text: 'The table wakes up. Day phase begins.', phase: 'System', timestamp: new Date().toISOString() });
-    return of(this.storage.upsert('games', game)).pipe(delay(this.latency()), tap(() => this.refresh()));
+    return of(this.storage.upsert('games', game)).pipe(delay(this.latency()), tap(saved => {
+      this.refresh();
+      this.analytics.track('game_started', {
+        game_id: saved.id,
+        scenario_id: saved.scenarioId,
+        player_count: saved.players.length,
+        role_count: roles.length
+      });
+    }));
   }
 
   vote(gameId: string, userId: string): void {
@@ -167,7 +190,7 @@ export class GameService {
       game.status = 'Completed';
       game.completedAt = new Date().toISOString();
       game.winningSide = mafia === 0 ? 'Citizens' : 'Mafia';
-      this.analytics.trackEvent('Game', 'game_completed', game.id, 45);
+      this.trackGameCompleted(game);
     }
   }
 
@@ -186,5 +209,16 @@ export class GameService {
   private save(game: GameSession): void {
     this.storage.upsert('games', game);
     this.refresh();
+  }
+
+  private trackGameCompleted(game: GameSession): void {
+    this.analytics.track('game_completed', {
+      game_id: game.id,
+      scenario_id: game.scenarioId,
+      player_count: game.players.length,
+      phase_count: game.currentPhase,
+      winning_side: game.winningSide,
+      stat_event_count: game.statEvents?.length ?? 0
+    });
   }
 }
